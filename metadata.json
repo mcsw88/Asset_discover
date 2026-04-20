@@ -1,0 +1,6 @@
+{
+  "name": "Instagram Extractor PoC",
+  "description": "A tool to extract captions, hashtags, and candidate tags from Instagram URLs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
