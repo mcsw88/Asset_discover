@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidString(val, min, max) {
+      return val is string && val.size() >= min && val.size() <= max;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 256 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Search Records
+    match /searches/{searchId} {
+      function isValidSearch(data) {
+        return data.userId == request.auth.uid &&
+               isValidString(data.url, 1, 2048) &&
+               isValidId(data.urlKey) &&
+               data.createdAt == request.time;
+      }
+
+      // Allow get/create if the ID follows our convention {userId}_{urlKey}
+      // This allows the exists() check to work even for non-existent documents
+      allow get: if isSignedIn() && searchId.split('_')[0] == request.auth.uid;
+      allow create: if isSignedIn() && isValidSearch(request.resource.data);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // URL Stats
+    match /stats/{urlKey} {
+      function isValidStat(data) {
+        return isValidString(data.url, 1, 2048) &&
+               isValidId(data.urlKey) &&
+               data.count is number && data.count >= 0;
+      }
+
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidStat(request.resource.data) && request.resource.data.count == 1;
+      allow update: if isSignedIn() && 
+                    isValidStat(request.resource.data) &&
+                    request.resource.data.count == resource.data.count + 1 &&
+                    request.resource.data.url == resource.data.url &&
+                    request.resource.data.urlKey == resource.data.urlKey;
+    }
+
+    // Extractions (Cache)
+    match /extractions/{urlId} {
+      // Server writes via Admin SDK bypass these rules
+      // Clients only need to read
+      allow read: if isSignedIn();
+      allow write: if false; // Only server can write
+    }
+  }
+}

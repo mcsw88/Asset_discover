@@ -1,0 +1,53 @@
+{
+  "entities": {
+    "SearchRecord": {
+      "title": "SearchRecord",
+      "description": "Individual search entry for a user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "url": { "type": "string" },
+        "urlKey": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "url", "urlKey", "createdAt"]
+    },
+    "URLStat": {
+      "title": "URLStat",
+      "description": "Global statistics for a specific URL",
+      "type": "object",
+      "properties": {
+        "url": { "type": "string" },
+        "urlKey": { "type": "string" },
+        "count": { "type": "number" }
+      },
+      "required": ["url", "urlKey", "count"]
+    },
+    "Extraction": {
+      "title": "Extraction",
+      "description": "Cached extraction result for a URL",
+      "type": "object",
+      "properties": {
+        "url": { "type": "string" },
+        "platform": { "type": "string" },
+        "fetch_status": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["url", "platform", "fetch_status"]
+    }
+  },
+  "firestore": {
+    "/searches/{searchId}": {
+      "schema": "SearchRecord",
+      "description": "Flat collection for all searches, indexed by userId for history"
+    },
+    "/stats/{urlKey}": {
+      "schema": "URLStat",
+      "description": "Aggregated stats per URL"
+    },
+    "/extractions/{urlId}": {
+      "schema": "Extraction",
+      "description": "Cached data to reduce API costs"
+    }
+  }
+}
